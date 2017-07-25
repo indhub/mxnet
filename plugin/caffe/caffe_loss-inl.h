@@ -185,13 +185,15 @@ Operator* CreateOp(CaffeLossParam param, int);
 class CaffeLossProp : public OperatorProperty {
  public:
   std::vector<std::string> ListArguments() const override {
-    return {"data", "label"};
+    std::vector<std::string> res;
+    for (int i = 0; i < param_.num_data; ++i)
+      res.push_back(std::string("data_") + std::to_string(i));
+    return res;
   }
 
   void Init(const std::vector<std::pair<std::string, std::string> >& kwargs) override {
     param_.Init(kwargs);
     CHECK_EQ(param_.num_out, 1);
-    CHECK_EQ(param_.num_data, 2);
 
     // Fetch grad_scale from prototxt
     if ((param_.prototxt.loss_weight_size() > 0))
