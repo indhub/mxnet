@@ -134,7 +134,9 @@ class CaffeDataIter : public IIterator<TBlobBatch> {
 
     if (loc_ + batch_size_ <= param_.num_examples) {
       batch_data_.dptr_ = top_[DATA]->mutable_cpu_data();
+      batch_data_.shape_  = mxnet::TShape(top_[DATA]->shape().begin(), top_[DATA]->shape().end());
       batch_label_.dptr_ = top_[LABEL]->mutable_cpu_data();
+      batch_label_.shape_ = mxnet::TShape(top_[LABEL]->shape().begin(),  top_[LABEL]->shape().end());
 
       out_.data.clear();
       out_.data.push_back(batch_data_);

@@ -55,6 +55,19 @@ class PrefetcherIter : public IIterator<DataBatch> {
     iter_.Init([this](DataBatch **dptr) {
         if (!loader_->Next()) return false;
         const TBlobBatch& batch = loader_->Value();
+
+        // If this batch requires a different size, delete and re-create
+        if(*dptr != nullptr) {
+            CHECK(batch.data.size() == (*dptr)->data.size());
+            for (size_t i = 0; i < batch.data.size(); ++i) {
+                if((*dptr)->data.at(i).shape() != batch.data[i].shape_) {
+                  delete *dptr;
+                  *dptr = nullptr;
+                  break;
+                }
+            }
+        }
+
         if (*dptr == nullptr) {
           // allocate databatch
           *dptr = new DataBatch();

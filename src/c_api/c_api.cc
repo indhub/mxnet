@@ -539,7 +539,7 @@ int MXDataIterGetLabel(DataIterHandle handle, NDArrayHandle *out) {
   // temp hack to make label 1D
   // TODO(tianjun) make label 1D when label_width=0
   TShape shape = db.data[1].shape();
-  if (shape[1] == 1) {
+  if (shape.ndim() == 2 && shape[1] == 1) {
     *pndarray = db.data[1].Reshape(mshadow::Shape1(shape[0]));
   } else {
     *pndarray = db.data[1];
