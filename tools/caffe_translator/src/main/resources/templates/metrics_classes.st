@@ -16,17 +16,16 @@ class TrainMetrics():
                 self.update_metrics(module, label, reset=True)
                 self.print_metrics(batch_num)
         else:
-            # If I'll have to print metrics 'average_loss' iterations from now,
-            # append a metric so I can start updating that.
+            # Metrics must be print 'average_loss' iterations from now.
+            # Append a metric which will get updated starting now.
             if((batch_num + self.average_loss) % self.display == 0):
                 self.append_one()
 
-            # If I'm less than 'average_loss' iteration away from a display step,
-            # update the metrics.
+            # Less that 'average_loss' iteration away from a display step. Update metrics.
             if((batch_num + self.average_loss) % self.display \< self.average_loss):
                 self.update_metrics(module, label)
 
-            # If I'm at a display step, print the metrics.
+            # At display step. Print metrics.
             if(batch_num % self.display == 0):
                 self.print_metrics(batch_num, remove_heads=True)
 
