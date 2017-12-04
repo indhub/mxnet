@@ -12,9 +12,9 @@ public class Optimizer {
     }
 
     public String generateInitCode() {
-        ST st = gh.getTemplate("opt_" + solver.getType());
+        ST st = gh.getTemplate("opt_" + solver.getType().toLowerCase());
         if (st == null) {
-            System.err.println(String.format("Unknown optimizer type (). Using SGD instead."));
+            System.err.println(String.format("Unknown optimizer type (%s). Using SGD instead.", solver.getType()));
             st = gh.getTemplate("opt_sgd");
         }
 
