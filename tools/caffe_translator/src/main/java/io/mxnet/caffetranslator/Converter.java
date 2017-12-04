@@ -157,19 +157,24 @@ public class Converter {
             // If the translator cannot translate this layer to an MXNet layer,
             // use CaffeOp or CaffeLoss instead.
             if (generator == null) {
-                if (layer.getType().toLowerCase().endsWith("loss")) {
+                if (layer.getType().toLowerCase().endsWith("loss") && !(layer.getType().equalsIgnoreCase("Accuracy"))) {
                     generator = generators.getGenerator("CaffePluginLossLayer");
-                } else {
+                } else if (!layer.getType().equalsIgnoreCase("Accuracy")) {
                     generator = generators.getGenerator("PluginIntLayerGenerator");
                 }
             }
 
-            GeneratorOutput out = generator.generate(layer, mlModel);
-            String segment = out.code;
-            code.append(segment);
-            code.append(NL);
+            if (generator != null) {
+                GeneratorOutput out = generator.generate(layer, mlModel);
+                String segment = out.code;
+                code.append(segment);
+                code.append(NL);
+                layerIndex += out.numLayersTranslated;
+            } else {
+                layerIndex ++;
+            }
 
-            layerIndex += out.numLayersTranslated;
+
         }
 
         String loss = getLoss(mlModel, code);
