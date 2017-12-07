@@ -238,7 +238,7 @@ def parse_args():
         be packed by default.')
     rgroup.add_argument('--center-crop', type=bool, default=False,
                         help='specify whether to crop the center image to make it rectangular.')
-    rgroup.add_argument('--quality', type=int, default=95,
+    rgroup.add_argument('--quality', type=int, default=0,
                         help='JPEG quality for encoding, 1-100; or PNG compression for encoding, 1-9')
     rgroup.add_argument('--num-thread', type=int, default=1,
                         help='number of thread to use for encoding. order of images will be different\
@@ -249,7 +249,7 @@ def parse_args():
         1: Loads a color image. Any transparency of image will be neglected. It is the default flag.\
         0: Loads image in grayscale mode.\
         -1:Loads image as such including alpha channel.')
-    rgroup.add_argument('--encoding', type=str, default='.jpg', choices=['.jpg', '.png'],
+    rgroup.add_argument('--encoding', type=str, default='.png', choices=['.jpg', '.png'],
                         help='specify the encoding of the images.')
     rgroup.add_argument('--pack-label', type=bool, default=False,
         help='Whether to also pack multi dimensional label in the record file')

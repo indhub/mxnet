@@ -48,26 +48,29 @@ inline void TransformLocations(DType *out, const DType *anchors,
                                const float vx, const float vy,
                                const float vw, const float vh) {
   // transform predictions to detection results
-  DType al = anchors[0];
-  DType at = anchors[1];
-  DType ar = anchors[2];
-  DType ab = anchors[3];
-  DType aw = ar - al;
-  DType ah = ab - at;
-  DType ax = (al + ar) / 2.f;
-  DType ay = (at + ab) / 2.f;
-  DType px = loc_pred[0];
-  DType py = loc_pred[1];
-  DType pw = loc_pred[2];
-  DType ph = loc_pred[3];
-  DType ox = px * vx * aw + ax;
-  DType oy = py * vy * ah + ay;
-  DType ow = exp(pw * vw) * aw / 2;
-  DType oh = exp(ph * vh) * ah / 2;
-  out[0] = clip ? std::max(DType(0), std::min(DType(1), ox - ow)) : (ox - ow);
-  out[1] = clip ? std::max(DType(0), std::min(DType(1), oy - oh)) : (oy - oh);
-  out[2] = clip ? std::max(DType(0), std::min(DType(1), ox + ow)) : (ox + ow);
-  out[3] = clip ? std::max(DType(0), std::min(DType(1), oy + oh)) : (oy + oh);
+  DType prior_l = anchors[0];
+  DType prior_t = anchors[1];
+  DType prior_r = anchors[2];
+  DType prior_b = anchors[3];
+
+  DType prior_width = prior_r - prior_l;
+  DType prior_height = prior_b - prior_t;
+  DType prior_center_x = (prior_l + prior_r) / 2.f;
+  DType prior_center_y = (prior_t + prior_b) / 2.f;
+
+  DType pred_center_x = loc_pred[0];
+  DType pred_center_y = loc_pred[1];
+  DType pred_width = loc_pred[2];
+  DType pred_height = loc_pred[3];
+
+  DType decoded_center_x = pred_center_x * vx * prior_width + prior_center_x;
+  DType decoded_center_y = pred_center_y * vy * prior_height + prior_center_y;
+  DType decoded_width_half = exp(pred_width * vw) * prior_width / 2.f;
+  DType decoded_height_half = exp(pred_height * vh) * prior_height / 2.f;
+  out[0] = clip ? std::max(DType(0), std::min(DType(1), decoded_center_x - decoded_width_half)) : (decoded_center_x - decoded_width_half);
+  out[1] = clip ? std::max(DType(0), std::min(DType(1), decoded_center_y - decoded_height_half)) : (decoded_center_y - decoded_height_half);
+  out[2] = clip ? std::max(DType(0), std::min(DType(1), decoded_center_x + decoded_width_half)) : (decoded_center_x + decoded_width_half);
+  out[3] = clip ? std::max(DType(0), std::min(DType(1), decoded_center_y + decoded_height_half)) : (decoded_center_y + decoded_height_half);
 }
 
 template<typename DType>

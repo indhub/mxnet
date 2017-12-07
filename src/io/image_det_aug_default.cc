@@ -99,8 +99,10 @@ struct DefaultImageDetAugmentParam : public dmlc::Parameter<DefaultImageDetAugme
   float random_contrast_prob;
   /*! \brief random mirror prob */
   float rand_mirror_prob;
+  /*! \brief random blur prob */
+  float rand_blur_prob;
   /*! \brief filled color while padding */
-  int fill_value;
+  Tuple<int> fill_values;
   /*! \brief interpolation method 0-NN 1-bilinear 2-cubic 3-area 4-lanczos4 9-auto 10-rand  */
   int inter_method;
   /*! \brief shape of the image data */
@@ -177,7 +179,9 @@ struct DefaultImageDetAugmentParam : public dmlc::Parameter<DefaultImageDetAugme
         .describe("Augmentation Param: Probability to apply random contrast.");
     DMLC_DECLARE_FIELD(rand_mirror_prob).set_default(0.0f)
         .describe("Augmentation Param: Probability to apply horizontal flip aka. mirror.");
-    DMLC_DECLARE_FIELD(fill_value).set_default(127)
+    DMLC_DECLARE_FIELD(rand_blur_prob).set_default(0.0f)
+        .describe("Augmentation Param: Probability to apply gaussian blur.");
+    DMLC_DECLARE_FIELD(fill_values).set_default(Tuple<int>({127,127,127}))
         .describe("Augmentation Param: Filled color value while padding.");
     DMLC_DECLARE_FIELD(inter_method).set_default(1)
         .describe("Augmentation Param: 0-NN 1-bilinear 2-cubic 3-area 4-lanczos4 9-auto 10-rand.");
@@ -256,7 +260,7 @@ class ImageDetLabel {
    */
   void FromArray(const std::vector<float> &raw_label) {
     int label_width = static_cast<int>(raw_label.size());
-    CHECK_GE(label_width, 7);  // at least 2(header) + 5(1 object)
+    CHECK_GE(label_width, 2);  // at least 2(header) + 5(1 object)  //TODO (klee): no object can cause a problem?
     int header_width = static_cast<int>(raw_label[0]);
     CHECK_GE(header_width, 2);
     object_width_ = static_cast<int>(raw_label[1]);
@@ -498,7 +502,8 @@ class DefaultImageDetAugmenter : public ImageAugmenter {
   Rect GeneratePadBox(const float max_pad_scale,
     common::RANDOM_ENGINE *prnd, const float threshold = 1.05f) {
       float new_scale = std::uniform_real_distribution<float>(
-        1.f, max_pad_scale)(*prnd);
+        0.501f, roundf(max_pad_scale)+0.499f)(*prnd);
+      new_scale = roundf(new_scale);    //TODO (klee): make be consitent with caffe
       if (new_scale < threshold) return Rect(0, 0, 0, 0);
       auto rand_uniform = std::uniform_real_distribution<float>(0.f, new_scale - 1);
       float x0 = rand_uniform(*prnd);
@@ -566,6 +571,15 @@ class DefaultImageDetAugmenter : public ImageAugmenter {
       }
     }
 
+    // random gaussian blur
+    if (param_.rand_blur_prob > 0 && rand_uniform(*prnd) < param_.rand_blur_prob)
+    {
+      int k_radius = 3.0*(double(rand()) / double(RAND_MAX)); //0,1,2,3(rare)
+      k_radius += 2;  //2,3,4,5(rare)
+      int ksize = 1 + 2 * k_radius; //5,7,9,11(rare)
+      cv::GaussianBlur(res, res, cv::Size(ksize, ksize), 0);
+    }
+
     // random mirror logic
     if (param_.rand_mirror_prob > 0 && rand_uniform(*prnd) < param_.rand_mirror_prob) {
       if (det_label.TryMirror()) {
@@ -588,7 +602,7 @@ class DefaultImageDetAugmenter : public ImageAugmenter {
             int right = static_cast<int>((pad_box.width + pad_box.x - 1) * res.cols);
             int bot = static_cast<int>((pad_box.height + pad_box.y - 1) * res.rows);
             cv::copyMakeBorder(temp_, res, top, bot, left, right, cv::BORDER_ISOLATED,
-              cv::Scalar(param_.fill_value, param_.fill_value, param_.fill_value));
+              cv::Scalar(param_.fill_values[0], param_.fill_values[1], param_.fill_values[2]));
           }
         }
       }
