@@ -58,14 +58,17 @@ enum MultiBoxPriorOpOutputs {kOut};
 }  // namespace mboxprior_enum
 
 struct MultiBoxPriorParam : public dmlc::Parameter<MultiBoxPriorParam> {
-  nnvm::Tuple<float> sizes;
+  nnvm::Tuple<float> sizes_w;
+  nnvm::Tuple<float> sizes_h;
   nnvm::Tuple<float> ratios;
   bool clip;
   nnvm::Tuple<float> steps;
   nnvm::Tuple<float> offsets;
   DMLC_DECLARE_PARAMETER(MultiBoxPriorParam) {
-    DMLC_DECLARE_FIELD(sizes).set_default({1.0f})
-    .describe("List of sizes of generated MultiBoxPriores.");
+    DMLC_DECLARE_FIELD(sizes_w).set_default({1.0f})
+    .describe("List of sizes_w of generated MultiBoxPriores.");
+    DMLC_DECLARE_FIELD(sizes_h).set_default({1.0f})
+    .describe("List of sizes_h of generated MultiBoxPriores.");
     DMLC_DECLARE_FIELD(ratios).set_default({1.0f})
     .describe("List of aspect ratios of generated MultiBoxPriores.");
     DMLC_DECLARE_FIELD(clip).set_default(false)
@@ -81,11 +84,15 @@ template<typename xpu, typename DType>
 class MultiBoxPriorOp : public Operator {
  public:
   explicit MultiBoxPriorOp(MultiBoxPriorParam param)
-    : clip_(param.clip), sizes_(param.sizes.begin(), param.sizes.end()),
+    : clip_(param.clip),
+    sizes_w_(param.sizes_w.begin(), param.sizes_w.end()),
+    sizes_h_(param.sizes_h.begin(), param.sizes_h.end()),
     ratios_(param.ratios.begin(), param.ratios.end()),
     steps_(param.steps.begin(), param.steps.end()),
     offsets_(param.offsets.begin(), param.offsets.end()) {
-      CHECK_GT(sizes_.size(), 0);
+      CHECK_GT(sizes_w_.size(), 0);
+      CHECK_GT(sizes_h_.size(), 0);
+      CHECK_EQ(sizes_w_.size(), sizes_h_.size());
       CHECK_GT(ratios_.size(), 0);
       CHECK_EQ(steps_.size(), 2);
       CHECK_EQ(offsets_.size(), 2);
@@ -109,7 +116,7 @@ class MultiBoxPriorOp : public Operator {
     // TODO(zhreshold): this implementation is to be compliant to original ssd in caffe
     // The prior boxes could be implemented in more versatile ways
     // since input sizes are same in each batch, we could share MultiBoxPrior
-    const int num_sizes = static_cast<int>(sizes_.size());
+    const int num_sizes = static_cast<int>(sizes_w_.size());
     const int num_ratios = static_cast<int>(ratios_.size());
     const int num_anchors = num_sizes - 1 + num_ratios;  // anchors per location
     int in_height = in_data[mboxprior_enum::kData].size(2);
@@ -122,7 +129,7 @@ class MultiBoxPriorOp : public Operator {
       steps_[0] = 1.f / in_height;
       steps_[1] = 1.f / in_width;
     }
-    MultiBoxPriorForward(out, sizes_, ratios_, in_width, in_height, steps_, offsets_);
+    MultiBoxPriorForward(out, sizes_w_, sizes_h_, ratios_, in_width, in_height, steps_, offsets_);
 
     if (clip_) {
       Assign(out, req[mboxprior_enum::kOut], F<mshadow_op::clip_zero_one>(out));
@@ -145,7 +152,8 @@ class MultiBoxPriorOp : public Operator {
 
  private:
   bool clip_;
-  std::vector<float> sizes_;
+  std::vector<float> sizes_w_;
+  std::vector<float> sizes_h_;
   std::vector<float> ratios_;
   std::vector<float> steps_;
   std::vector<float> offsets_;
@@ -182,7 +190,7 @@ class MultiBoxPriorProp: public OperatorProperty {
     CHECK_GT(in_width, 0) << "Input width should > 0";
     // since input sizes are same in each batch, we could share MultiBoxPrior
     TShape oshape = TShape(3);
-    int num_sizes = param_.sizes.ndim();
+    int num_sizes = param_.sizes_w.ndim();
     int num_ratios = param_.ratios.ndim();
     oshape[0] = 1;
     oshape[1] = in_height * in_width * (num_sizes + num_ratios - 1);
