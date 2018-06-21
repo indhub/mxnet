@@ -70,8 +70,47 @@ def _test_tutorial_nb(tutorial):
             return False
         return True
 
-def test_basic():
-    assert _test_tutorial_nb('chapter01_crashcourse/ndarray')
+#def test_ndarray():
+#    assert _test_tutorial_nb('chapter01_crashcourse/ndarray')
 
-#test_basic()
+#def test_linear_algebra():
+#    assert _test_tutorial_nb('chapter01_crashcourse/linear-algebra')
+
+#def test_probability():
+#    assert _test_tutorial_nb('chapter01_crashcourse/probability')
+
+#def test_ndarray():
+#    assert _test_tutorial_nb('chapter01_crashcourse/ndarray')
+
+#def test_autograd():
+#    assert _test_tutorial_nb('chapter01_crashcourse/autograd')
+
+# Chapter 2
+
+def test_linear_regression_scratch():
+    assert _test_tutorial_nb('chapter02_supervised-learning/linear-regression-scratch')
+
+def test_logistic_regression_gluon():
+    assert _test_tutorial_nb('chapter02_supervised-learning/logistic-regression-gluon')
+
+def test_logistic_regression_gluon():
+    assert _test_tutorial_nb('chapter02_supervised-learning/logistic-regression-gluon')
+
+def test_softmax_regression_scratch():
+    assert _test_tutorial_nb('chapter02_supervised-learning/softmax-regression-scratch')
+
+def test_softmax_regression_gluon():
+    assert _test_tutorial_nb('chapter02_supervised-learning/softmax-regression-gluon')
+
+def test_regularization_scratch():
+    assert _test_tutorial_nb('chapter02_supervised-learning/regularization-scratch')
+
+def test_regularization_gluon():
+    assert _test_tutorial_nb('chapter02_supervised-learning/regularization-gluon')
+
+def test_perceptron():
+    assert _test_tutorial_nb('chapter02_supervised-learning/perceptron')
+
+#def test_()
+#    assert _test_tutorial_nb('')
 
