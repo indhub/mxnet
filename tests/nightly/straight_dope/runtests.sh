@@ -1,0 +1,2 @@
+MXNET_TUTORIAL_TEST_KERNEL=dope nosetests test_straight_dope_single_gpu.py
+
